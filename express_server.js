@@ -24,10 +24,15 @@ const urlDatabase = {
 };
 
 app.get("/u/:shortURL", (req, res) => {
-  // const longURL = ...
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   res.redirect(longURL);
+});
+
+app.post("/urls/:shortURL", (req, res) => {
+  let newLongURL = req.body.longURL;
+  urlDatabase[req.params.shortURL] = newLongURL;
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
