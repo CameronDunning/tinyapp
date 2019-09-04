@@ -17,7 +17,8 @@ const {
   checkEmailExists,
   addNewUser,
   validLogin,
-  getUserObj
+  getUserObj,
+  urlsForUser
 } = require("./db");
 
 // Routes
@@ -74,7 +75,9 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   let newShortURL = generateRandomString();
   let newLongURL = req.body.longURL;
-  urlDatabase[newShortURL] = newLongURL;
+  urlDatabase[newShortURL] = {};
+  urlDatabase[newShortURL].longURL = newLongURL;
+  urlDatabase[newShortURL].userID = req.cookies.user_id.id;
   res.redirect(`/urls/${newShortURL}`);
 });
 
@@ -97,12 +100,21 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    user_id: req.cookies["user_id"]
-  };
-  res.render("urls_show", templateVars);
+  if (!req.cookies.user_id) {
+    res.redirect("/login");
+  } else {
+    let user = req.cookies.user_id.id;
+    if (user === urlDatabase[req.params.shortURL].userID) {
+      let templateVars = {
+        shortURL: req.params.shortURL,
+        longURL: urlDatabase[req.params.shortURL],
+        user_id: req.cookies["user_id"]
+      };
+      res.render("urls_show", templateVars);
+    } else {
+      res.status(400).send("You do not have access to this URL");
+    }
+  }
 });
 
 app.get("/register", (req, res) => {
@@ -116,8 +128,12 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  let userURLs = {};
+  if (req.cookies["user_id"]) {
+    userURLs = urlsForUser(req.cookies["user_id"].id);
+  }
   let templateVars = {
-    urls: urlDatabase,
+    urls: userURLs,
     user_id: req.cookies["user_id"]
   };
   res.render("urls_index", templateVars);

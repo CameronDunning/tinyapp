@@ -83,6 +83,16 @@ const getUserObj = email => {
   return;
 };
 
+const urlsForUser = id => {
+  let output = {};
+  for (let elem in urlDatabase) {
+    if (urlDatabase[elem].userID === id) {
+      output[elem] = urlDatabase[elem].longURL;
+    }
+  }
+  return output;
+};
+
 module.exports = {
   urlDatabase,
   users,
@@ -91,5 +101,6 @@ module.exports = {
   checkEmailExists,
   addNewUser,
   validLogin,
-  getUserObj
+  getUserObj,
+  urlsForUser
 };
