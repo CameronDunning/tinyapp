@@ -55,11 +55,35 @@ const addNewUser = newUser => {
   return users[newID];
 };
 
+const validLogin = input => {
+  for (let user in users) {
+    if (users[user].email === input.body.email) {
+      if (users[user].password === input.body.password) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+  return false;
+};
+
+const getUserObj = email => {
+  for (let user in users) {
+    if (users[user].email === email) {
+      return users[user];
+    }
+  }
+  return;
+};
+
 module.exports = {
   urlDatabase,
   users,
   generateRandomString,
   checkNotEmptyInput,
   checkEmailExists,
-  addNewUser
+  addNewUser,
+  validLogin,
+  getUserObj
 };

@@ -15,7 +15,9 @@ const {
   generateRandomString,
   checkNotEmptyInput,
   checkEmailExists,
-  addNewUser
+  addNewUser,
+  validLogin,
+  getUserObj
 } = require("./db");
 
 // Routes
@@ -25,15 +27,18 @@ app.post("/login", (req, res) => {
   let notEmpty = checkNotEmptyInput(req);
   let validEmail = checkEmailExists(req);
   if (notEmpty && validEmail) {
-    user_id = addNewUser(req);
-    res.cookie("user_id", user_id);
-    res.redirect("/urls");
+    if (validLogin(req)) {
+      let user = getUserObj(req.body.email);
+      res.cookie("user_id", user);
+      res.redirect("/urls");
+    } else {
+      res.status(403).send("Invalid Login");
+    }
   } else if (!validEmail) {
-    res.status(400).send("Email Already Exists");
+    res.status(403).send("Email not found");
   } else if (!notEmpty) {
     res.status(400).send("Invalid Entry");
   }
-  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
