@@ -60,20 +60,6 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post("/register", (req, res) => {
-  let notEmpty = checkNotEmptyInput(req);
-  let validEmail = checkEmailExists(req);
-  if (notEmpty && validEmail) {
-    user_id = addNewUser(req);
-    res.cookie("user_id", user_id);
-    res.redirect("/urls");
-  } else if (!validEmail) {
-    res.status(400).send("Email Already Exists");
-  } else if (!notEmpty) {
-    res.status(400).send("Invalid Entry");
-  }
-});
-
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
@@ -103,7 +89,11 @@ app.get("/urls/new", (req, res) => {
   let templateVars = {
     user_id: req.cookies["user_id"]
   };
-  res.render("urls_new", templateVars);
+  if (req.cookies.user_id) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
