@@ -9,68 +9,30 @@ const PORT = 8080;
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Data
-const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk"
-  }
-};
-
-// Functions
-const generateRandomString = () => {
-  let result = "";
-  let characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let charactersLength = characters.length;
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-};
-
-const checkNotEmptyInput = input => {
-  if (!input.body.email || !input.body.password) {
-    return false;
-  } else {
-    return true;
-  }
-};
-
-const checkValidEmail = input => {
-  for (let user in users) {
-    if (users[user].email === input.body.email) {
-      return false;
-    }
-  }
-  return true;
-};
-
-const addNewUser = newUser => {
-  let newID = generateRandomString();
-  users[newID] = {};
-  users[newID].id = newID;
-  users[newID].email = newUser.body.email;
-  users[newID].password = newUser.body.password;
-  return users[newID];
-};
+const {
+  urlDatabase,
+  users,
+  generateRandomString,
+  checkNotEmptyInput,
+  checkEmailExists,
+  addNewUser
+} = require("./db");
 
 // Routes
 // Post
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.user_id);
+  // res.cookie("user_id", req.body.user_id);
+  let notEmpty = checkNotEmptyInput(req);
+  let validEmail = checkEmailExists(req);
+  if (notEmpty && validEmail) {
+    user_id = addNewUser(req);
+    res.cookie("user_id", user_id);
+    res.redirect("/urls");
+  } else if (!validEmail) {
+    res.status(400).send("Email Already Exists");
+  } else if (!notEmpty) {
+    res.status(400).send("Invalid Entry");
+  }
   res.redirect("/urls");
 });
 
@@ -81,7 +43,21 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   let notEmpty = checkNotEmptyInput(req);
-  let validEmail = checkValidEmail(req);
+  let validEmail = !checkEmailExists(req);
+  if (notEmpty && validEmail) {
+    user_id = addNewUser(req);
+    res.cookie("user_id", user_id);
+    res.redirect("/urls");
+  } else if (!validEmail) {
+    res.status(400).send("Email Already Exists");
+  } else if (!notEmpty) {
+    res.status(400).send("Invalid Entry");
+  }
+});
+
+app.post("/register", (req, res) => {
+  let notEmpty = checkNotEmptyInput(req);
+  let validEmail = checkEmailExists(req);
   if (notEmpty && validEmail) {
     user_id = addNewUser(req);
     res.cookie("user_id", user_id);
@@ -137,6 +113,11 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/register", (req, res) => {
   let templateVars = { user_id: undefined };
   res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  let templateVars = { user_id: undefined };
+  res.render("login", templateVars);
 });
 
 app.get("/urls", (req, res) => {
