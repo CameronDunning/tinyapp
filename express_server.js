@@ -64,17 +64,18 @@ const addNewUser = newUser => {
   users[newID].id = newID;
   users[newID].email = newUser.body.email;
   users[newID].password = newUser.body.password;
+  return users[newID];
 };
 
 // Routes
 // Post
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
@@ -82,8 +83,8 @@ app.post("/register", (req, res) => {
   let notEmpty = checkNotEmptyInput(req);
   let validEmail = checkValidEmail(req);
   if (notEmpty && validEmail) {
-    addNewUser(req);
-    res.cookie("username", req.body.email);
+    user_id = addNewUser(req);
+    res.cookie("user_id", user_id);
     res.redirect("/urls");
   } else if (!validEmail) {
     res.status(400).send("Email Already Exists");
@@ -119,7 +120,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   let templateVars = {
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   };
   res.render("urls_new", templateVars);
 });
@@ -128,20 +129,20 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { username: undefined };
+  let templateVars = { user_id: undefined };
   res.render("register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
   let templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   };
   res.render("urls_index", templateVars);
 });
