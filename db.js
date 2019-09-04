@@ -4,7 +4,7 @@ const urlDatabase = {
     longURL: "http://www.lighthouselabs.ca",
     userID: "userRandomID"
   },
-  "9sm5xK": {
+  sgq3y6: {
     longURL: "http://www.google.com",
     userID: "userRandomID"
   }

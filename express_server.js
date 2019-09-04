@@ -62,14 +62,32 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
+  if (!req.cookies.user_id) {
+    res.redirect("/login");
+  } else {
+    let user = req.cookies.user_id.id;
+    if (user === urlDatabase[req.params.shortURL].userID) {
+      delete urlDatabase[req.params.shortURL];
+      res.redirect("/urls");
+    } else {
+      res.status(400).send("You do not have access to this URL");
+    }
+  }
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  let newLongURL = req.body.longURL;
-  urlDatabase[req.params.shortURL].longURL = newLongURL;
-  res.redirect("/urls");
+  if (!req.cookies.user_id) {
+    res.redirect("/login");
+  } else {
+    let user = req.cookies.user_id.id;
+    if (user === urlDatabase[req.params.shortURL].userID) {
+      let newLongURL = req.body.longURL;
+      urlDatabase[req.params.shortURL].longURL = newLongURL;
+      res.redirect("/urls");
+    } else {
+      res.status(400).send("You do not have access to this URL");
+    }
+  }
 });
 
 app.post("/urls", (req, res) => {
@@ -107,7 +125,7 @@ app.get("/urls/:shortURL", (req, res) => {
     if (user === urlDatabase[req.params.shortURL].userID) {
       let templateVars = {
         shortURL: req.params.shortURL,
-        longURL: urlDatabase[req.params.shortURL],
+        longURL: urlDatabase[req.params.shortURL].longURL,
         user_id: req.cookies["user_id"]
       };
       res.render("urls_show", templateVars);
