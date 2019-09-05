@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
+const methodOverride = require("method-override");
 const PORT = 8080;
 const {
   urlDatabase,
@@ -20,6 +21,7 @@ const {
 // Activate imports
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(methodOverride("_method"));
 app.use(
   cookieSession({
     name: "user_id",
@@ -30,7 +32,6 @@ app.use(
 // Routes
 // Post
 app.post("/login", (req, res) => {
-  // res.session("user_id", req.body.user_id);
   let notEmpty = checkNotEmptyInput(req);
   let validEmail = checkEmailExists(req);
   if (notEmpty && validEmail) {
@@ -66,7 +67,7 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
     res.status(400).send("You need to log in");
   } else {
@@ -80,7 +81,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 });
 
-app.post("/urls/:shortURL", (req, res) => {
+app.put("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
     res.status(400).send("You need to log in");
   } else {
