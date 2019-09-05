@@ -2,20 +2,8 @@
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 const PORT = 8080;
-
-// Activate imports
-app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(
-  cookieSession({
-    name: "user_id",
-    keys: ["id"]
-  })
-);
 const {
   urlDatabase,
   users,
@@ -27,6 +15,16 @@ const {
   getUserByEmail,
   urlsForUser
 } = require("./db");
+
+// Activate imports
+app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  cookieSession({
+    name: "user_id",
+    keys: ["id"]
+  })
+);
 
 // Routes
 // Post
@@ -49,6 +47,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
+  res.clearCookie("user_id.sig");
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
@@ -68,7 +67,7 @@ app.post("/register", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
+    res.status(400).send("You need to log in");
   } else {
     let user = req.session.user_id.id;
     if (user === urlDatabase[req.params.shortURL].userID) {
@@ -82,7 +81,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
+    res.status(400).send("You need to log in");
   } else {
     let user = req.session.user_id.id;
     if (user === urlDatabase[req.params.shortURL].userID) {
@@ -96,12 +95,16 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let newShortURL = generateRandomString();
-  let newLongURL = req.body.longURL;
-  urlDatabase[newShortURL] = {};
-  urlDatabase[newShortURL].longURL = newLongURL;
-  urlDatabase[newShortURL].userID = req.session.user_id.id;
-  res.redirect(`/urls/${newShortURL}`);
+  if (!req.session.user_id) {
+    res.status(400).send("You need to log in");
+  } else {
+    let newShortURL = generateRandomString();
+    let newLongURL = req.body.longURL;
+    urlDatabase[newShortURL] = {};
+    urlDatabase[newShortURL].longURL = newLongURL;
+    urlDatabase[newShortURL].userID = req.session.user_id.id;
+    res.redirect(`/urls/${newShortURL}`);
+  }
 });
 
 // Get
@@ -128,18 +131,22 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
-    res.redirect("/login");
+    res.status(400).send("You are not logged in!");
   } else {
     let user = req.session.user_id.id;
-    if (user === urlDatabase[req.params.shortURL].userID) {
-      let templateVars = {
-        shortURL: req.params.shortURL,
-        longURL: urlDatabase[req.params.shortURL].longURL,
-        user_id: req.session["user_id"]
-      };
-      res.render("urls_show", templateVars);
+    if (urlDatabase[req.params.shortURL]) {
+      if (user === urlDatabase[req.params.shortURL].userID) {
+        let templateVars = {
+          shortURL: req.params.shortURL,
+          longURL: urlDatabase[req.params.shortURL].longURL,
+          user_id: req.session["user_id"]
+        };
+        res.render("urls_show", templateVars);
+      } else {
+        res.status(400).send("You do not have access to this URL");
+      }
     } else {
-      res.status(400).send("You do not have access to this URL");
+      res.status(400).send("This shortened URL can not be found");
     }
   }
 });
@@ -172,7 +179,9 @@ app.get("/urls", (req, res) => {
     };
     res.render("urls_index", templateVars);
   } else {
-    res.redirect("/login");
+    let templateVars = { user_id: undefined };
+    res.render("urls_index", templateVars);
+    // res.redirect("/login");
   }
 });
 
