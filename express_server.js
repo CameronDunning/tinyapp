@@ -25,7 +25,7 @@ const {
   checkEmailExists,
   addNewUser,
   validLogin,
-  getUserObj,
+  getUserByEmail,
   urlsForUser
 } = require("./db");
 
@@ -37,8 +37,7 @@ app.post("/login", (req, res) => {
   let validEmail = checkEmailExists(req);
   if (notEmpty && validEmail) {
     if (validLogin(req)) {
-      let user = getUserObj(req.body.email);
-      req.session.user_id = user;
+      req.session.user_id = getUserByEmail(req.body.email, users);
       res.redirect("/urls");
     } else {
       res.status(403).send("Invalid Login");
