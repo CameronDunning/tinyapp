@@ -17,7 +17,8 @@ const {
   checkEmailExists,
   addNewUser,
   validLogin,
-  getUserObj
+  getUserObj,
+  urlsForUser
 } = require("./db");
 
 // Routes
@@ -60,35 +61,41 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post("/register", (req, res) => {
-  let notEmpty = checkNotEmptyInput(req);
-  let validEmail = checkEmailExists(req);
-  if (notEmpty && validEmail) {
-    user_id = addNewUser(req);
-    res.cookie("user_id", user_id);
-    res.redirect("/urls");
-  } else if (!validEmail) {
-    res.status(400).send("Email Already Exists");
-  } else if (!notEmpty) {
-    res.status(400).send("Invalid Entry");
+app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!req.cookies.user_id) {
+    res.redirect("/login");
+  } else {
+    let user = req.cookies.user_id.id;
+    if (user === urlDatabase[req.params.shortURL].userID) {
+      delete urlDatabase[req.params.shortURL];
+      res.redirect("/urls");
+    } else {
+      res.status(400).send("You do not have access to this URL");
+    }
   }
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
-});
-
 app.post("/urls/:shortURL", (req, res) => {
-  let newLongURL = req.body.longURL;
-  urlDatabase[req.params.shortURL] = newLongURL;
-  res.redirect("/urls");
+  if (!req.cookies.user_id) {
+    res.redirect("/login");
+  } else {
+    let user = req.cookies.user_id.id;
+    if (user === urlDatabase[req.params.shortURL].userID) {
+      let newLongURL = req.body.longURL;
+      urlDatabase[req.params.shortURL].longURL = newLongURL;
+      res.redirect("/urls");
+    } else {
+      res.status(400).send("You do not have access to this URL");
+    }
+  }
 });
 
 app.post("/urls", (req, res) => {
   let newShortURL = generateRandomString();
   let newLongURL = req.body.longURL;
-  urlDatabase[newShortURL] = newLongURL;
+  urlDatabase[newShortURL] = {};
+  urlDatabase[newShortURL].longURL = newLongURL;
+  urlDatabase[newShortURL].userID = req.cookies.user_id.id;
   res.redirect(`/urls/${newShortURL}`);
 });
 
@@ -103,16 +110,29 @@ app.get("/urls/new", (req, res) => {
   let templateVars = {
     user_id: req.cookies["user_id"]
   };
-  res.render("urls_new", templateVars);
+  if (req.cookies.user_id) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    user_id: req.cookies["user_id"]
-  };
-  res.render("urls_show", templateVars);
+  if (!req.cookies.user_id) {
+    res.redirect("/login");
+  } else {
+    let user = req.cookies.user_id.id;
+    if (user === urlDatabase[req.params.shortURL].userID) {
+      let templateVars = {
+        shortURL: req.params.shortURL,
+        longURL: urlDatabase[req.params.shortURL].longURL,
+        user_id: req.cookies["user_id"]
+      };
+      res.render("urls_show", templateVars);
+    } else {
+      res.status(400).send("You do not have access to this URL");
+    }
+  }
 });
 
 app.get("/register", (req, res) => {
@@ -126,8 +146,12 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  let userURLs = {};
+  if (req.cookies["user_id"]) {
+    userURLs = urlsForUser(req.cookies["user_id"].id);
+  }
   let templateVars = {
-    urls: urlDatabase,
+    urls: userURLs,
     user_id: req.cookies["user_id"]
   };
   res.render("urls_index", templateVars);
