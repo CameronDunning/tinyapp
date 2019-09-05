@@ -1,3 +1,6 @@
+// Imports
+const bcrypt = require("bcrypt");
+
 // Data
 const urlDatabase = {
   b2xVn2: {
@@ -54,17 +57,18 @@ const checkEmailExists = input => {
 
 const addNewUser = newUser => {
   let newID = generateRandomString();
+  let password = bcrypt.hashSync(newUser.body.password, 10);
   users[newID] = {};
   users[newID].id = newID;
   users[newID].email = newUser.body.email;
-  users[newID].password = newUser.body.password;
+  users[newID].password = password;
   return users[newID];
 };
 
 const validLogin = input => {
   for (let user in users) {
     if (users[user].email === input.body.email) {
-      if (users[user].password === input.body.password) {
+      if (bcrypt.compareSync(input.body.password, users[user].password)) {
         return true;
       } else {
         return false;

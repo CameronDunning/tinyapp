@@ -4,6 +4,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const PORT = 8080;
+const bcrypt = require("bcrypt");
 
 // Activate imports
 app.set("view engine", "ejs");
