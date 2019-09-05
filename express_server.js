@@ -127,7 +127,6 @@ app.get("/u/:shortURL", (req, res) => {
     } else {
       urlDatabase[req.params.shortURL].countUnique.push("no_ID");
     }
-
     res.redirect(longURL);
   } else {
     res.status(400).send("This short URL doesn't exist");
@@ -155,6 +154,9 @@ app.get("/urls/:shortURL", (req, res) => {
         let templateVars = {
           shortURL: req.params.shortURL,
           longURL: urlDatabase[req.params.shortURL].longURL,
+          datestamp: urlDatabase[req.params.shortURL].datestamp,
+          count: urlDatabase[req.params.shortURL].count,
+          countUnique: urlDatabase[req.params.shortURL].countUnique,
           user_id: req.session["user_id"]
         };
         res.render("urls_show", templateVars);

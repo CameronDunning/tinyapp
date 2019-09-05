@@ -93,10 +93,6 @@ const urlsForUser = id => {
   for (let elem in urlDatabase) {
     if (urlDatabase[elem].userID === id) {
       output[elem] = urlDatabase[elem];
-      // output[elem].longURL = urlDatabase[elem].longURL;
-      // output[elem].datestamp = urlDatabase[elem].datestamp;
-      // output[elem].count = urlDatabase[elem].count;
-      // output[elem].countUnique = urlDatabase[elem].countUnique;
     }
   }
   return output;
@@ -110,7 +106,7 @@ const newURL = (longURL, id, database) => {
   database[newShortURL].userID = id;
   database[newShortURL].datestamp = date;
   database[newShortURL].count = 0;
-  database[newShortURL].countUnique = [id];
+  database[newShortURL].countUnique = [];
   return newShortURL;
 };
 
