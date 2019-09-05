@@ -58,8 +58,7 @@ app.post("/register", (req, res) => {
   let notEmpty = checkNotEmptyInput(req);
   let validEmail = !checkEmailExists(req);
   if (notEmpty && validEmail) {
-    user = addNewUser(req);
-    req.session.user_id = user;
+    req.session.user_id = addNewUser(req);
     res.redirect("/urls");
   } else if (!validEmail) {
     res.status(400).send("Email Already Exists");
@@ -108,9 +107,13 @@ app.post("/urls", (req, res) => {
 
 // Get
 app.get("/u/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
-  res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL]) {
+    const shortURL = req.params.shortURL;
+    const longURL = urlDatabase[shortURL].longURL;
+    res.redirect(longURL);
+  } else {
+    res.status(400).send("This short URL doesn't exist");
+  }
 });
 
 app.get("/urls/new", (req, res) => {
@@ -143,29 +146,43 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = { user_id: undefined };
-  res.render("register", templateVars);
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = { user_id: undefined };
+    res.render("register", templateVars);
+  }
 });
 
 app.get("/login", (req, res) => {
-  let templateVars = { user_id: undefined };
-  res.render("login", templateVars);
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    let templateVars = { user_id: undefined };
+    res.render("login", templateVars);
+  }
 });
 
 app.get("/urls", (req, res) => {
   let userURLs = {};
   if (req.session["user_id"]) {
     userURLs = urlsForUser(req.session["user_id"].id);
+    let templateVars = {
+      urls: userURLs,
+      user_id: req.session["user_id"]
+    };
+    res.render("urls_index", templateVars);
+  } else {
+    res.redirect("/login");
   }
-  let templateVars = {
-    urls: userURLs,
-    user_id: req.session["user_id"]
-  };
-  res.render("urls_index", templateVars);
 });
 
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  if (req.session["user_id"]) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 // Listen
