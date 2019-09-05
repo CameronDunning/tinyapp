@@ -1,5 +1,6 @@
 // Imports
 const bcrypt = require("bcrypt");
+const { getFormattedDate } = require("./helpers");
 
 // Data
 const urlDatabase = {
@@ -91,10 +92,26 @@ const urlsForUser = id => {
   let output = {};
   for (let elem in urlDatabase) {
     if (urlDatabase[elem].userID === id) {
-      output[elem] = urlDatabase[elem].longURL;
+      output[elem] = urlDatabase[elem];
+      // output[elem].longURL = urlDatabase[elem].longURL;
+      // output[elem].datestamp = urlDatabase[elem].datestamp;
+      // output[elem].count = urlDatabase[elem].count;
+      // output[elem].countUnique = urlDatabase[elem].countUnique;
     }
   }
   return output;
+};
+
+const newURL = (longURL, id, database) => {
+  let newShortURL = generateRandomString();
+  let date = getFormattedDate();
+  database[newShortURL] = {};
+  database[newShortURL].longURL = longURL;
+  database[newShortURL].userID = id;
+  database[newShortURL].datestamp = date;
+  database[newShortURL].count = 0;
+  database[newShortURL].countUnique = [id];
+  return newShortURL;
 };
 
 module.exports = {
@@ -106,5 +123,6 @@ module.exports = {
   addNewUser,
   validLogin,
   getUserByEmail,
-  urlsForUser
+  urlsForUser,
+  newURL
 };

@@ -13,7 +13,8 @@ const {
   addNewUser,
   validLogin,
   getUserByEmail,
-  urlsForUser
+  urlsForUser,
+  newURL
 } = require("./db");
 
 // Activate imports
@@ -98,11 +99,11 @@ app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
     res.status(400).send("You need to log in");
   } else {
-    let newShortURL = generateRandomString();
-    let newLongURL = req.body.longURL;
-    urlDatabase[newShortURL] = {};
-    urlDatabase[newShortURL].longURL = newLongURL;
-    urlDatabase[newShortURL].userID = req.session.user_id.id;
+    let newShortURL = newURL(
+      req.body.longURL,
+      req.session.user_id.id,
+      urlDatabase
+    );
     res.redirect(`/urls/${newShortURL}`);
   }
 });
@@ -112,6 +113,21 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL]) {
     const shortURL = req.params.shortURL;
     const longURL = urlDatabase[shortURL].longURL;
+    urlDatabase[req.params.shortURL].count++;
+    if (req.session.user_id) {
+      if (
+        !urlDatabase[req.params.shortURL].countUnique.includes(
+          req.session.user_id.id
+        )
+      ) {
+        urlDatabase[req.params.shortURL].countUnique.push(
+          req.session.user_id.id
+        );
+      }
+    } else {
+      urlDatabase[req.params.shortURL].countUnique.push("no_ID");
+    }
+
     res.redirect(longURL);
   } else {
     res.status(400).send("This short URL doesn't exist");
