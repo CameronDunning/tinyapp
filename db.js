@@ -78,10 +78,10 @@ const validLogin = input => {
   return false;
 };
 
-const getUserObj = email => {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user];
+const getUserByEmail = (email, database) => {
+  for (let user in database) {
+    if (database[user].email === email) {
+      return database[user];
     }
   }
   return;
@@ -105,6 +105,6 @@ module.exports = {
   checkEmailExists,
   addNewUser,
   validLogin,
-  getUserObj,
+  getUserByEmail,
   urlsForUser
 };
